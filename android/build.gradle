@@ -10,6 +10,9 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url 'https://customers.pspdfkit.com/maven/'
+        }
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
@@ -17,5 +20,16 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
+
+allprojects {
+    repositories {
+        mavenCentral()
+        google()
+        maven {
+            url 'https://customers.pspdfkit.com/maven/'
+        }
+    }
+}
+
 
 apply plugin: "com.facebook.react.rootproject"

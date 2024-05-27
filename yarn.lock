@@ -3012,6 +3012,7 @@ __metadata:
     prettier: 2.8.8
     react: 18.2.0
     react-native: 0.74.1
+    react-native-pspdfkit: "https://github.com/PSPDFKit/react-native"
     react-test-renderer: 18.2.0
     typescript: 5.0.4
   languageName: unknown
@@ -7946,6 +7947,18 @@ __metadata:
   version: 17.0.2
   resolution: "react-is@npm:17.0.2"
   checksum: 9d6d111d8990dc98bc5402c1266a808b0459b5d54830bbea24c12d908b536df7883f268a7868cfaedde3dd9d4e0d574db456f84d2e6df9c4526f99bb4b5344d8
+  languageName: node
+  linkType: hard
+
+"react-native-pspdfkit@https://github.com/PSPDFKit/react-native":
+  version: 2.10.0
+  resolution: "react-native-pspdfkit@https://github.com/PSPDFKit/react-native.git#commit=34697d8c26da15c63b2eb5abd7f2156e9c757e8a"
+  peerDependencies:
+    "@types/react": ^18.2.28
+    prop-types: ^15.8.1
+    react: ">=17.0.0"
+    react-native: ">=0.66.0"
+  checksum: e3006e610132087f2343b5993f8b796ee19741e752e53f0c296cf36c28f8502186b670a4e52121db6bb18304825503f039a21cc17ee2468345423fd6a00ff49a
   languageName: node
   linkType: hard
 
