@@ -1,21 +1,13 @@
 import React, {useRef} from 'react';
 import PSPDFKitView, {Toolbar} from 'react-native-pspdfkit';
-import {Button, NativeModules, Platform} from 'react-native';
+import {Button, NativeModules, Platform, View} from 'react-native';
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
 
 export const pspdfMainToolbar: Toolbar = {
   // Android only.
   toolbarMenuItems: {
-    buttons: [
-      'searchButtonItem',
-      'annotationButtonItem',
-      {
-        image: 'check_icon',
-        id: 'custom_check_action',
-        title: 'Check',
-      },
-    ],
+    buttons: ['searchButtonItem', 'annotationButtonItem'],
   },
   // iOS only.
   leftBarButtonItems: {
@@ -29,13 +21,31 @@ const DOCUMENT =
 function App(): JSX.Element {
   const psdpdfRef = useRef<PSPDFKitView>(null);
 
-  const handleShowIcon = () => {
-    console.log('handleShowIcon');
-
+  const handleShowCustomIcon = () => {
     psdpdfRef.current?.setToolbar({
+      ...pspdfMainToolbar,
       toolbarMenuItems: {
+        ...pspdfMainToolbar.toolbarMenuItems,
         buttons: [
           ...pspdfMainToolbar.toolbarMenuItems!.buttons,
+          {
+            image: 'close_icon',
+            id: 'custom_close_action',
+            title: 'Close',
+          },
+        ],
+      },
+    });
+  };
+
+  const handleShowExistentIcon = () => {
+    psdpdfRef.current?.setToolbar({
+      ...pspdfMainToolbar,
+      toolbarMenuItems: {
+        ...pspdfMainToolbar.toolbarMenuItems,
+        buttons: [
+          ...pspdfMainToolbar.toolbarMenuItems!.buttons,
+          'printButtonItem',
           {
             image: 'close_icon',
             id: 'custom_close_action',
@@ -51,24 +61,32 @@ function App(): JSX.Element {
   };
 
   return (
-    <>
-      <PSPDFKitView
-        document={DOCUMENT}
-        ref={psdpdfRef}
-        configuration={{
-          showThumbnailBar: 'scrollable',
-          pageTransition: 'scrollContinuous',
-          scrollDirection: 'vertical',
-        }}
-        toolbar={pspdfMainToolbar}
-        fragmentTag="PDF1"
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{flex: 1}}
-        onCustomToolbarButtonTapped={onCustomToolbarButtonTapped}
-      />
+    <View style={{display: 'flex', flex: 1, width: '100%'}}>
+      <View style={{flex: 1}}>
+        <PSPDFKitView
+          document={DOCUMENT}
+          ref={psdpdfRef}
+          configuration={{
+            showThumbnailBar: 'scrollable',
+            pageTransition: 'scrollContinuous',
+            scrollDirection: 'vertical',
+          }}
+          toolbar={pspdfMainToolbar}
+          fragmentTag="PDF1"
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{flex: 1}}
+          onCustomToolbarButtonTapped={onCustomToolbarButtonTapped}
+        />
+      </View>
 
-      <Button title="SHOW ICON" onPress={handleShowIcon} />
-    </>
+      <View style={{display: 'flex', flexDirection: 'row', gap: 16}}>
+        <Button title="SHOW CUSTOM ICON" onPress={handleShowCustomIcon} />
+        <Button
+          title="SHOW CUSTOM AND PRINT ICON"
+          onPress={handleShowExistentIcon}
+        />
+      </View>
+    </View>
   );
 }
 
