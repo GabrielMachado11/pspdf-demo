@@ -2,4 +2,5 @@
 <resources>
     <item name="custom_close_action" type="id"/>
     <item name="custom_check_action" type="id"/>
+    <item name="custom_summary_action" type="id"/>
 </resources>
