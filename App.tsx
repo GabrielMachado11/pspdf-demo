@@ -1,20 +1,52 @@
 import React, {useEffect, useRef, useState} from 'react';
 import PSPDFKitView, {Toolbar} from 'react-native-pspdfkit';
-import {Button, NativeModules, Platform, Text, View} from 'react-native';
+import {
+  Button,
+  Modal,
+  NativeModules,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {listAnnotation} from './db/repositories/annotationRepository';
 import {pspdpfOnAnnotationsChanged} from './utils/pspdpfOnAnnotationsChanged';
-import {AnnotationsJSON, PSPDFOnAnnotationsChangedPayload} from './utils/types';
+import {
+  AnnotationsJSON,
+  PSPDFAnnotation,
+  PSPDFOnAnnotationsChangedPayload,
+} from './utils/types';
+import WatermelonAnnotationModel from './db/model/WatermelonAnnotationModel';
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
 
 export const pspdfMainToolbar: Toolbar = {
   // Android only.
   toolbarMenuItems: {
-    buttons: ['searchButtonItem', 'annotationButtonItem'],
+    buttons: [
+      'searchButtonItem',
+      {
+        image: 'summary_icon',
+        id: 'custom_summary_action',
+        title: 'Summary',
+      },
+      'annotationButtonItem',
+    ],
   },
   // iOS only.
   leftBarButtonItems: {
     buttons: ['searchButtonItem', 'annotationButtonItem'],
+  },
+  rightBarButtonItems: {
+    buttons: [
+      'searchButtonItem',
+      {
+        image: 'summaryIcon.png',
+        id: 'custom_summary_action',
+        title: 'Summary',
+      },
+      'annotationButtonItem',
+    ],
   },
 };
 
@@ -24,6 +56,8 @@ const DOCUMENT =
 function App(): JSX.Element {
   const psdpdfRef = useRef<PSPDFKitView>(null);
   const [loadingAnnotations, setLoadingAnnotations] = useState<boolean>(true);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
+  const [annotations, setAnnotations] = useState<PSPDFAnnotation[]>([]);
 
   const handleShowCustomIcon = () => {
     psdpdfRef.current?.setToolbar({
@@ -61,7 +95,9 @@ function App(): JSX.Element {
   };
 
   const onCustomToolbarButtonTapped = (event: {id: string}) => {
-    console.log(event.id);
+    if (event.id === 'custom_summary_action') {
+      setIsSummaryModalOpen(true);
+    }
   };
 
   const loadRefAnnotations = async (annotationsJSON: AnnotationsJSON) => {
@@ -99,12 +135,69 @@ function App(): JSX.Element {
     pspdpfOnAnnotationsChanged(payload);
   };
 
+  const onDeleteAnnotation = async (annotation: PSPDFAnnotation) => {
+    await psdpdfRef.current?.removeAnnotation(annotation);
+    setIsSummaryModalOpen(false);
+  };
+
+  const getAnnotationsList = async () => {
+    const result = await listAnnotation();
+
+    const parseAnnotations: PSPDFAnnotation[] = result.map(item => {
+      return JSON.parse(item.content);
+    });
+
+    setAnnotations(parseAnnotations);
+  };
+
   useEffect(() => {
     loadAnnotations();
   }, []);
 
+  useEffect(() => {
+    getAnnotationsList();
+  }, [isSummaryModalOpen]);
+
   return (
     <>
+      {isSummaryModalOpen && (
+        <Modal
+          visible={isSummaryModalOpen}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setIsSummaryModalOpen(false)}>
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 12,
+              flex: 1,
+              paddingTop: 100,
+              flexDirection: 'column',
+              gap: 12,
+            }}>
+            <View style={{marginBottom: 20}}>
+              <TouchableOpacity onPress={() => setIsSummaryModalOpen(false)}>
+                <Text>Close modal</Text>
+              </TouchableOpacity>
+            </View>
+            {annotations.map(annotation => (
+              <View
+                style={{flexDirection: 'row', gap: 8, flexWrap: 'wrap'}}
+                key={annotation.name}>
+                <Text>
+                  {typeof annotation.text === 'string'
+                    ? annotation.text
+                    : annotation.text?.value}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => onDeleteAnnotation(annotation)}>
+                  <Text>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        </Modal>
+      )}
       <View style={{display: 'flex', flex: 1, width: '100%'}}>
         <View style={{flex: 1}}>
           <PSPDFKitView
