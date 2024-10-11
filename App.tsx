@@ -76,7 +76,6 @@ function App(): JSX.Element {
 
   const loadAnnotations = async () => {
     const result = await listAnnotation();
-    console.log({result});
 
     const annotations = result.map(item => {
       return JSON.parse(item.content);
@@ -96,8 +95,6 @@ function App(): JSX.Element {
     payload: PSPDFOnAnnotationsChangedPayload,
   ) => {
     if (loadingAnnotations) return;
-
-    console.log('passou');
 
     pspdpfOnAnnotationsChanged(payload);
   };
