@@ -1,13 +1,6 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useRef, useState} from 'react';
 import PSPDFKitView, {Toolbar} from 'react-native-pspdfkit';
-import {
-  Button,
-  NativeModules,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {Button, NativeModules, Platform, View} from 'react-native';
 
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
