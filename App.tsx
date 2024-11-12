@@ -1,8 +1,28 @@
-import React, {useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import PSPDFKitView, {Toolbar} from 'react-native-pspdfkit';
-import {Button, NativeModules, Platform, View} from 'react-native';
+import {
+  Button,
+  NativeModules,
+  Platform,
+  ToastAndroid,
+  View,
+} from 'react-native';
+
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
+
+export interface PSPDFAnnotation {
+  uuid: string;
+  name: string;
+  type: string;
+  pageIndex: string;
+  text?:
+    | {
+        format: string;
+        value: string;
+      }
+    | string;
+}
 
 export const pspdfMainToolbar: Toolbar = {
   // Android only.
@@ -13,6 +33,9 @@ export const pspdfMainToolbar: Toolbar = {
   leftBarButtonItems: {
     buttons: ['searchButtonItem', 'annotationButtonItem'],
   },
+  rightBarButtonItems: {
+    buttons: ['searchButtonItem', 'annotationButtonItem'],
+  },
 };
 
 const DOCUMENT =
@@ -20,6 +43,7 @@ const DOCUMENT =
 
 function App(): JSX.Element {
   const psdpdfRef = useRef<PSPDFKitView>(null);
+  const [annotations, setAnnotations] = useState<PSPDFAnnotation[]>([]);
 
   const handleShowCustomIcon = () => {
     psdpdfRef.current?.setToolbar({
@@ -60,6 +84,27 @@ function App(): JSX.Element {
     console.log(event.id);
   };
 
+  const saveAnnotations = async () => {
+    const allAnnotations = await psdpdfRef.current?.getAllAnnotations('all');
+    setAnnotations(allAnnotations.annotations);
+
+    if (allAnnotations.annotations.length) {
+      await psdpdfRef.current?.removeAnnotations(allAnnotations.annotations);
+    }
+  };
+
+  const loadAnnotations = async () => {
+    const annotationsJSON = {
+      annotations,
+      format: 'https://pspdfkit.com/instant-json/v1',
+    };
+
+    console.log(JSON.stringify(annotations));
+
+    setAnnotations([]);
+    await psdpdfRef.current?.addAnnotations(annotationsJSON);
+  };
+
   return (
     <View style={{display: 'flex', flex: 1, width: '100%'}}>
       <View style={{flex: 1}}>
@@ -76,15 +121,18 @@ function App(): JSX.Element {
           // eslint-disable-next-line react-native/no-inline-styles
           style={{flex: 1}}
           onCustomToolbarButtonTapped={onCustomToolbarButtonTapped}
+          onAnnotationsChanged={(payload: any) => {
+            if (Platform.OS !== 'android') return;
+            if (payload.change === 'added') {
+              ToastAndroid.show('Some Annotation was added', 5 * 1000);
+            }
+          }}
         />
       </View>
 
-      <View style={{display: 'flex', flexDirection: 'row', gap: 16}}>
-        <Button title="SHOW CUSTOM ICON" onPress={handleShowCustomIcon} />
-        <Button
-          title="SHOW CUSTOM AND PRINT ICON"
-          onPress={handleShowExistentIcon}
-        />
+      <View style={{flexDirection: 'row', gap: 16}}>
+        <Button title="Save annotations" onPress={saveAnnotations} />
+        <Button title="Load annotations" onPress={loadAnnotations} />
       </View>
     </View>
   );
