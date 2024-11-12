@@ -1,6 +1,12 @@
 import React, {useRef, useState} from 'react';
 import PSPDFKitView, {Toolbar} from 'react-native-pspdfkit';
-import {Button, NativeModules, Platform, View} from 'react-native';
+import {
+  Button,
+  NativeModules,
+  Platform,
+  ToastAndroid,
+  View,
+} from 'react-native';
 
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
@@ -93,6 +99,8 @@ function App(): JSX.Element {
       format: 'https://pspdfkit.com/instant-json/v1',
     };
 
+    console.log(JSON.stringify(annotations));
+
     setAnnotations([]);
     await psdpdfRef.current?.addAnnotations(annotationsJSON);
   };
@@ -113,20 +121,18 @@ function App(): JSX.Element {
           // eslint-disable-next-line react-native/no-inline-styles
           style={{flex: 1}}
           onCustomToolbarButtonTapped={onCustomToolbarButtonTapped}
+          onAnnotationsChanged={(payload: any) => {
+            if (Platform.OS !== 'android') return;
+            if (payload.change === 'added') {
+              ToastAndroid.show('Some Annotation was added', 5 * 1000);
+            }
+          }}
         />
       </View>
 
       <View style={{flexDirection: 'row', gap: 16}}>
         <Button title="Save annotations" onPress={saveAnnotations} />
         <Button title="Load annotations" onPress={loadAnnotations} />
-      </View>
-
-      <View style={{display: 'flex', flexDirection: 'row', gap: 16}}>
-        <Button title="SHOW CUSTOM ICON" onPress={handleShowCustomIcon} />
-        <Button
-          title="SHOW CUSTOM AND PRINT ICON"
-          onPress={handleShowExistentIcon}
-        />
       </View>
     </View>
   );
