@@ -126,6 +126,8 @@ function App(): JSX.Element {
             if (payload.change === 'added') {
               ToastAndroid.show('Some Annotation was added', 5 * 1000);
             }
+
+            console.log(payload.annotations);
           }}
         />
       </View>
