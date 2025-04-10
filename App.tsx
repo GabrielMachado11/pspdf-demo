@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import PSPDFKitView, {NotificationCenter, Toolbar} from 'react-native-pspdfkit';
-import {Button, NativeModules, Platform, View} from 'react-native';
+import {Button, NativeModules, Platform, TextInput, View} from 'react-native';
 
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
@@ -38,6 +38,8 @@ const DOCUMENT =
 function App(): JSX.Element {
   const psdpdfRef = useRef<PSPDFKitView>(null);
   const [annotations, setAnnotations] = useState<PSPDFAnnotation[]>([]);
+  const [pageIndexText, setPageIndexText] = useState<string>('0');
+  const [pageIndex, setPageIndex] = useState(0);
 
   const handleShowCustomIcon = () => {
     psdpdfRef.current?.setToolbar({
@@ -125,6 +127,7 @@ function App(): JSX.Element {
         <PSPDFKitView
           document={DOCUMENT}
           ref={psdpdfRef}
+          pageIndex={pageIndex}
           configuration={{
             showThumbnailBar: 'scrollable',
             pageTransition: 'scrollContinuous',
@@ -138,9 +141,25 @@ function App(): JSX.Element {
         />
       </View>
 
-      <View style={{flexDirection: 'row', gap: 16}}>
-        <Button title="Save annotations" onPress={saveAnnotations} />
-        <Button title="Load annotations" onPress={loadAnnotations} />
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 16,
+          position: 'absolute',
+          bottom: -20,
+          backgroundColor: 'white',
+          margin: 30,
+        }}>
+        <TextInput
+          onChangeText={props => setPageIndexText(props)}
+          value={pageIndexText}
+          keyboardType="numeric"
+          style={{flex: 1, color: 'black'}}
+        />
+        <Button
+          title="Search"
+          onPress={() => setPageIndex(Number(pageIndexText))}
+        />
       </View>
     </View>
   );
