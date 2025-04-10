@@ -1,12 +1,6 @@
-import React, {useRef, useState} from 'react';
-import PSPDFKitView, {Toolbar} from 'react-native-pspdfkit';
-import {
-  Button,
-  NativeModules,
-  Platform,
-  ToastAndroid,
-  View,
-} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import PSPDFKitView, {NotificationCenter, Toolbar} from 'react-native-pspdfkit';
+import {Button, NativeModules, Platform, View} from 'react-native';
 
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
@@ -105,6 +99,26 @@ function App(): JSX.Element {
     await psdpdfRef.current?.addAnnotations(annotationsJSON);
   };
 
+  useEffect(() => {
+    psdpdfRef.current
+      ?.getNotificationCenter()
+      .subscribe(NotificationCenter.AnnotationsEvent.REMOVED, (event: any) => {
+        console.log('REMOVED', JSON.stringify(event));
+      });
+
+    psdpdfRef.current
+      ?.getNotificationCenter()
+      .subscribe(NotificationCenter.AnnotationsEvent.CHANGED, (event: any) => {
+        console.log('CHANGED', JSON.stringify(event));
+      });
+
+    psdpdfRef.current
+      ?.getNotificationCenter()
+      .subscribe(NotificationCenter.AnnotationsEvent.ADDED, (event: any) => {
+        console.log('ADDED', JSON.stringify(event));
+      });
+  }, []);
+
   return (
     <View style={{display: 'flex', flex: 1, width: '100%'}}>
       <View style={{flex: 1}}>
@@ -121,14 +135,6 @@ function App(): JSX.Element {
           // eslint-disable-next-line react-native/no-inline-styles
           style={{flex: 1}}
           onCustomToolbarButtonTapped={onCustomToolbarButtonTapped}
-          onAnnotationsChanged={(payload: any) => {
-            if (Platform.OS !== 'android') return;
-            if (payload.change === 'added') {
-              ToastAndroid.show('Some Annotation was added', 5 * 1000);
-            }
-
-            console.log(payload.annotations);
-          }}
         />
       </View>
 

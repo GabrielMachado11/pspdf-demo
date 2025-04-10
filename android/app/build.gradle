@@ -77,7 +77,7 @@ android {
     namespace "com.awesomeproject"
     defaultConfig {
         applicationId "com.awesomeproject"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
@@ -106,6 +106,8 @@ android {
 }
 
 dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
