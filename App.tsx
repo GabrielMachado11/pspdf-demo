@@ -1,35 +1,104 @@
-import React, {useEffect, useRef, useState} from 'react';
-import PSPDFKitView, {NotificationCenter, Toolbar} from 'react-native-pspdfkit';
+import React, {useRef} from 'react';
+import PSPDFKitView, {
+  AnnotationType,
+  DocumentJSON,
+  InkAnnotation,
+} from 'react-native-pspdfkit';
 import {Button, NativeModules, Platform, View} from 'react-native';
 
 const PSPDFKit = NativeModules.PSPDFKit;
 PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
 
-export interface PSPDFAnnotation {
-  uuid: string;
-  name: string;
-  type: string;
-  pageIndex: string;
-  text?:
-    | {
-        format: string;
-        value: string;
-      }
-    | string;
-}
+const basicInkAnnotation: InkAnnotation[] = [
+  new InkAnnotation({
+    type: 'pspdfkit/ink',
+    bbox: [
+      89.586334228515625, 98.5791015625, 143.12948608398438, 207.1583251953125,
+    ],
+    pageIndex: 0,
+    isDrawnNaturally: false,
+    lines: {
+      intensities: [
+        [0.5, 0.5, 0.5],
+        [0.5, 0.5, 0.5],
+      ],
+      points: [
+        [
+          [92.086334228515625, 101.07916259765625],
+          [92.086334228515625, 202.15826416015625],
+          [138.12950134277344, 303.2374267578125],
+        ],
+        [
+          [184.17266845703125, 101.07916259765625],
+          [184.17266845703125, 202.15826416015625],
+          [230.2158203125, 303.2374267578125],
+        ],
+      ],
+    },
+  }),
+];
 
-export const pspdfMainToolbar: Toolbar = {
-  // Android only.
-  toolbarMenuItems: {
-    buttons: ['searchButtonItem', 'annotationButtonItem'],
-  },
-  // iOS only.
-  leftBarButtonItems: {
-    buttons: ['searchButtonItem', 'annotationButtonItem'],
-  },
-  rightBarButtonItems: {
-    buttons: ['searchButtonItem', 'annotationButtonItem'],
-  },
+const inkAnnotation: DocumentJSON = {
+  annotations: [
+    {
+      bbox: [
+        89.586334228515625, 98.5791015625, 143.12948608398438,
+        207.1583251953125,
+      ],
+      isDrawnNaturally: false,
+      lineWidth: 5,
+      lines: {
+        intensities: [
+          [0.5, 0.5, 0.5],
+          [0.5, 0.5, 0.5],
+        ],
+        points: [
+          [
+            [92.086334228515625, 101.07916259765625],
+            [92.086334228515625, 202.15826416015625],
+            [138.12950134277344, 303.2374267578125],
+          ],
+          [
+            [184.17266845703125, 101.07916259765625],
+            [184.17266845703125, 202.15826416015625],
+            [230.2158203125, 303.2374267578125],
+          ],
+        ],
+      },
+      opacity: 1,
+      pageIndex: 0,
+      name: 'A167811E-6D10-4546-A147-B7AD775FE8AC',
+      strokeColor: '#AA47BE',
+      type: 'pspdfkit/ink',
+      v: 1,
+    },
+  ],
+  format: 'https://pspdfkit.com/instant-json/v1',
+};
+
+const noteAnnotation: DocumentJSON = {
+  annotations: [
+    {
+      v: 2,
+      pageIndex: 0,
+      bbox: [95, 115, 125, 127],
+      opacity: 1,
+      pdfObjectId: 200,
+      creatorName: 'John Doe',
+      createdAt: '2012-04-23T18:25:43.511Z',
+      updatedAt: '2012-04-23T18:28:05.100Z',
+      id: '01F46S31WM8Q46MP3T0BAJ0F87',
+      name: '01F46S31WM8Q46MP3T0BAJ0F87',
+      type: 'pspdfkit/note',
+      text: {
+        format: 'plain',
+        value: 'Text for the note annotation',
+      },
+      icon: 'circle',
+      color: '#80ff80',
+    },
+  ],
+  format: 'https://pspdfkit.com/instant-json/v1',
 };
 
 const DOCUMENT =
@@ -37,87 +106,12 @@ const DOCUMENT =
 
 function App(): JSX.Element {
   const psdpdfRef = useRef<PSPDFKitView>(null);
-  const [annotations, setAnnotations] = useState<PSPDFAnnotation[]>([]);
 
-  const handleShowCustomIcon = () => {
-    psdpdfRef.current?.setToolbar({
-      ...pspdfMainToolbar,
-      toolbarMenuItems: {
-        ...pspdfMainToolbar.toolbarMenuItems,
-        buttons: [
-          ...pspdfMainToolbar.toolbarMenuItems!.buttons,
-          {
-            image: 'close_icon',
-            id: 'custom_close_action',
-            title: 'Close',
-          },
-        ],
-      },
-    });
+  const loadAnnotations = async (
+    annotations: any[] | AnnotationType[] | Record<string, any>,
+  ) => {
+    await psdpdfRef.current?.getDocument().addAnnotations(annotations);
   };
-
-  const handleShowExistentIcon = () => {
-    psdpdfRef.current?.setToolbar({
-      ...pspdfMainToolbar,
-      toolbarMenuItems: {
-        ...pspdfMainToolbar.toolbarMenuItems,
-        buttons: [
-          ...pspdfMainToolbar.toolbarMenuItems!.buttons,
-          'printButtonItem',
-          {
-            image: 'close_icon',
-            id: 'custom_close_action',
-            title: 'Close',
-          },
-        ],
-      },
-    });
-  };
-
-  const onCustomToolbarButtonTapped = (event: {id: string}) => {
-    console.log(event.id);
-  };
-
-  const saveAnnotations = async () => {
-    const allAnnotations = await psdpdfRef.current?.getAllAnnotations('all');
-    setAnnotations(allAnnotations.annotations);
-
-    if (allAnnotations.annotations.length) {
-      await psdpdfRef.current?.removeAnnotations(allAnnotations.annotations);
-    }
-  };
-
-  const loadAnnotations = async () => {
-    const annotationsJSON = {
-      annotations,
-      format: 'https://pspdfkit.com/instant-json/v1',
-    };
-
-    console.log(JSON.stringify(annotations));
-
-    setAnnotations([]);
-    await psdpdfRef.current?.addAnnotations(annotationsJSON);
-  };
-
-  useEffect(() => {
-    psdpdfRef.current
-      ?.getNotificationCenter()
-      .subscribe(NotificationCenter.AnnotationsEvent.REMOVED, (event: any) => {
-        console.log('REMOVED', JSON.stringify(event));
-      });
-
-    psdpdfRef.current
-      ?.getNotificationCenter()
-      .subscribe(NotificationCenter.AnnotationsEvent.CHANGED, (event: any) => {
-        console.log('CHANGED', JSON.stringify(event));
-      });
-
-    psdpdfRef.current
-      ?.getNotificationCenter()
-      .subscribe(NotificationCenter.AnnotationsEvent.ADDED, (event: any) => {
-        console.log('ADDED', JSON.stringify(event));
-      });
-  }, []);
 
   return (
     <View style={{display: 'flex', flex: 1, width: '100%'}}>
@@ -130,17 +124,31 @@ function App(): JSX.Element {
             pageTransition: 'scrollContinuous',
             scrollDirection: 'vertical',
           }}
-          toolbar={pspdfMainToolbar}
           fragmentTag="PDF1"
           // eslint-disable-next-line react-native/no-inline-styles
           style={{flex: 1}}
-          onCustomToolbarButtonTapped={onCustomToolbarButtonTapped}
         />
       </View>
 
-      <View style={{flexDirection: 'row', gap: 16}}>
-        <Button title="Save annotations" onPress={saveAnnotations} />
-        <Button title="Load annotations" onPress={loadAnnotations} />
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 16,
+          marginBottom: 32,
+          flexWrap: 'wrap',
+        }}>
+        <Button
+          title="Load ink"
+          onPress={() => loadAnnotations(inkAnnotation)}
+        />
+        <Button
+          title="Load basic ink"
+          onPress={() => loadAnnotations(basicInkAnnotation)}
+        />
+        <Button
+          title="Load note"
+          onPress={() => loadAnnotations(noteAnnotation)}
+        />
       </View>
     </View>
   );
