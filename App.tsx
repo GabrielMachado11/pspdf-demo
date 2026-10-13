@@ -1,5 +1,9 @@
 import React, {useRef, useState} from 'react';
-import PSPDFKitView, {Toolbar} from 'react-native-pspdfkit';
+import NutrientView, {
+  DocumentJSON,
+  Toolbar,
+  type AnnotationType,
+} from '@nutrient-sdk/react-native';
 import {
   Button,
   NativeModules,
@@ -8,21 +12,16 @@ import {
   View,
 } from 'react-native';
 
-const PSPDFKit = NativeModules.PSPDFKit;
-PSPDFKit.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
+const Nutrient = NativeModules.Nutrient;
+Nutrient?.setLicenseKey(null); // Or your valid license keys using `setLicenseKeys`.
 
-export interface PSPDFAnnotation {
-  uuid: string;
-  name: string;
-  type: string;
-  pageIndex: string;
-  text?:
-    | {
-        format: string;
-        value: string;
-      }
-    | string;
-}
+export const pspdfMenuItemGrouping = [
+  'pen',
+  'eraser',
+  'freetext',
+  'note',
+  'highlight',
+];
 
 export const pspdfMainToolbar: Toolbar = {
   // Android only.
@@ -41,12 +40,13 @@ export const pspdfMainToolbar: Toolbar = {
 const DOCUMENT =
   Platform.OS === 'ios' ? 'Document.pdf' : 'file:///android_asset/Document.pdf';
 
-function App(): JSX.Element {
-  const psdpdfRef = useRef<PSPDFKitView>(null);
-  const [annotations, setAnnotations] = useState<PSPDFAnnotation[]>([]);
+function App(): React.JSX.Element {
+  const pdfRef = useRef<NutrientView>(null);
+  const [annotations, setAnnotations] = useState<AnnotationType[]>([]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleShowCustomIcon = () => {
-    psdpdfRef.current?.setToolbar({
+    pdfRef.current?.setToolbar({
       ...pspdfMainToolbar,
       toolbarMenuItems: {
         ...pspdfMainToolbar.toolbarMenuItems,
@@ -62,8 +62,9 @@ function App(): JSX.Element {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleShowExistentIcon = () => {
-    psdpdfRef.current?.setToolbar({
+    pdfRef.current?.setToolbar({
       ...pspdfMainToolbar,
       toolbarMenuItems: {
         ...pspdfMainToolbar.toolbarMenuItems,
@@ -85,44 +86,50 @@ function App(): JSX.Element {
   };
 
   const saveAnnotations = async () => {
-    const allAnnotations = await psdpdfRef.current?.getAllAnnotations('all');
-    setAnnotations(allAnnotations.annotations);
+    const document = pdfRef.current?.getDocument();
+    const list = ((await document?.getAnnotations('all')) ??
+      []) as AnnotationType[];
 
-    if (allAnnotations.annotations.length) {
-      await psdpdfRef.current?.removeAnnotations(allAnnotations.annotations);
+    setAnnotations(list);
+
+    if (list.length) {
+      await document?.removeAnnotations(list);
     }
   };
 
   const loadAnnotations = async () => {
-    const annotationsJSON = {
-      annotations,
-      format: 'https://pspdfkit.com/instant-json/v1',
-    };
+    const annotationsJSON = new DocumentJSON();
+    annotationsJSON.annotations = annotations;
+    annotationsJSON.format = 'https://pspdfkit.com/instant-json/v1';
 
     console.log(JSON.stringify(annotations));
 
     setAnnotations([]);
-    await psdpdfRef.current?.addAnnotations(annotationsJSON);
+    await pdfRef.current?.getDocument().applyInstantJSON(annotationsJSON);
   };
 
   return (
     <View style={{display: 'flex', flex: 1, width: '100%'}}>
       <View style={{flex: 1}}>
-        <PSPDFKitView
+        <NutrientView
           document={DOCUMENT}
-          ref={psdpdfRef}
+          ref={pdfRef}
           configuration={{
+            androidEnableStylusOnDetection: true,
             showThumbnailBar: 'scrollable',
             pageTransition: 'scrollContinuous',
             scrollDirection: 'vertical',
           }}
           toolbar={pspdfMainToolbar}
+          menuItemGrouping={pspdfMenuItemGrouping}
           fragmentTag="PDF1"
           // eslint-disable-next-line react-native/no-inline-styles
           style={{flex: 1}}
           onCustomToolbarButtonTapped={onCustomToolbarButtonTapped}
-          onAnnotationsChanged={(payload: any) => {
-            if (Platform.OS !== 'android') return;
+          onAnnotationsChanged={(payload: {change?: string}) => {
+            if (Platform.OS !== 'android') {
+              return;
+            }
             if (payload.change === 'added') {
               ToastAndroid.show('Some Annotation was added', 5 * 1000);
             }
