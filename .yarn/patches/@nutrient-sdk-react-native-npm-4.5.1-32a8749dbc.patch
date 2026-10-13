@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index b0d8ed2502a936bd82356552bbd0e905a4dd67a2..0f287b51b24c008680fd3ba652905e1b119b04e8 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -71,7 +71,7 @@ if (isNewArchitectureEnabled()) {
+     apply plugin: "com.facebook.react"
+ }
+ android {
+-    compileSdkVersion 34
++    compileSdkVersion rootProject.ext.has("compileSdkVersion") ? rootProject.ext.compileSdkVersion : 37
+ 
+     namespace "com.pspdfkit.react"
+ 
